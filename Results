@@ -1,0 +1,449 @@
+
+Commands for Data Cleaning
+--------------------------
+
+file_path = “/tmp/pabbatph/spark/”
+inTextData = spark.read.format("csv").option("header", "true").option("delimiter","\t").load(file_path)
+name_list = inTextData.schema.names
+name_list = str(name_list).strip("['']").split(' ')
+names = []
+for item in name_list:
+    if len(item)>0:
+        names.append(item)
+rdd1 = inTextData.rdd
+rdd2 = rdd1.map(lambda x: str(x).split('=')[1])
+rdd3 = rdd2.map(lambda x: ' '.join(x.split()))
+rdd4 = rdd3.map(lambda x: x[1:-2])
+rdd4.saveAsTextFile(‘/tmp/pabbatph/spark2015’)
+
+
+datfr2010=spark.read.csv('/tmp/pabbatph/spark2010',header=False,sep=' ')
+datfr2011=spark.read.csv('/tmp/pabbatph/spark2011',header=False,sep=' ')
+datfr2012=spark.read.csv('/tmp/pabbatph/spark2012',header=False,sep=' ')  
+datfr2013=spark.read.csv('/tmp/pabbatph/spark2013',header=False,sep=' ')  
+datfr2014=spark.read.csv('/tmp/pabbatph/spark2014',header=False,sep=' ')  
+datfr2015=spark.read.csv('/tmp/pabbatph/spark2015',header=False,sep=' ')  
+datfr2016=spark.read.csv('/tmp/pabbatph/spark2016',header=False,sep=' ')  
+datfr2017=spark.read.csv('/tmp/pabbatph/spark2017',header=False,sep=' ')  
+datfr2018=spark.read.csv('/tmp/pabbatph/spark2018',header=False,sep=' ')  
+datfr2019=spark.read.csv('/tmp/pabbatph/spark2019',header=False,sep=' ')  
+datfr11=datfr2010.union(datfr2011)
+datfr12=datfr11.union(datfr2012)
+datfr13=datfr12.union(datfr2013)
+datfr14=datfr13.union(datfr2014)
+datfr15=datfr14.union(datfr2015)
+datfr16=datfr15.union(datfr2016)
+datfr17=datfr16.union(datfr2017)
+datfr18=datfr17.union(datfr2018)
+datfr19=datfr18.union(datfr2019)
+
+
+cleanData = datfr19.drop('_c1','_c4','_c6','_c8','_c10','_c12','_c14')
+cleanData = cleanData.withColumnRenamed('_c0','STN').withColumnRenamed('_c2','YEARMODA')\
+                    .withColumnRenamed('_c3','TEMP').withColumnRenamed('_c5','DEWP')\
+                    .withColumnRenamed('_c7','SLP').withColumnRenamed('_c9','STP')\
+                    .withColumnRenamed('_c11','VISIB').withColumnRenamed('_c13','WDSP')\
+                    .withColumnRenamed('_c15','MXSPD').withColumnRenamed('_c16','GUST')\
+                    .withColumnRenamed('_c17','MAX').withColumnRenamed('_c18','MIN')\
+                    .withColumnRenamed('_c19','PRCP').withColumnRenamed('_c20','SNDP')\
+                    .withColumnRenamed('_c21','FRSHTT')
+
+======================================================================================================================================================================
+Question 1:
+
+Creating Temporary view to calculate Maximum Temparature:
+----------------------------------------------------------
+
+Maxtemp_Clean = cleanData.filter(cleanData.MAX != 9999.9)
+Maxtemp_Clean_converted = Maxtemp_Clean.select(Maxtemp_Clean.MAX.cast('float').alias('MAX'), Maxtemp_Clean.STN, Maxtemp_Clean.YEARMODA)
+Maxtemp_Clean_converted.createOrReplaceTempView("MaxTempTable")
+
+Creating Temporary View to Calculate Minimum Temparature for Value 
+-------------------------------------------------------------------
+
+Mintemp_Clean = cleanData.filter(cleanData.MIN != 9999.9)
+Mintemp_Clean_converted = Mintemp_Clean.select(Mintemp_Clean.MAX.cast('float').alias('MIN'), Mintemp_Clean.STN, Mintemp_Clean.YEARMODA)
+Mintemp_Clean_converted.createOrReplaceTempView("MinTempTable")
+
+Now calculate Min and max for each year: 
+
+Maximum Temparature for 2010:
+ MaxTempvalue = spark.sql("select * from MaxTempTable where MAX=(select MAX(MAX) from MaxTempTable where YEARMODA like ‘2010%’)")
+ MaxTempvalue.show()
+
+Minimum Temparature for 2010
+
+ MinTempvalue = spark.sql("select * from MinTempTable where MIN=(select MIN(MIN) from MinTempTable where YEARMODA like '2010%')")
+ MinTempvalue.show()
+
+Maximum Temparature for 2011:
+ MaxTempvalue = spark.sql("select * from MaxTempTable where MAX=(select MAX(MAX) from MaxTempTable where YEARMODA like ‘2011%’)")
+ MaxTempvalue.show()
+
+Minimum Temparature for 2011
+
+ MinTempvalue = spark.sql("select * from MinTempTable where MIN=(select MIN(MIN) from MinTempTable where YEARMODA like ‘2011%’)")
+ MinTempvalue.show()
+
+
+Maximum Temparature for 2012:
+ MaxTempvalue = spark.sql("select * from MaxTempTable where MAX=(select MAX(MAX) from MaxTempTable where YEARMODA like ‘2012%’)")
+ MaxTempvalue.show()
+
+Minimum Temparature for 2012
+
+ MinTempvalue = spark.sql("select * from MinTempTable where MIN=(select MIN(MIN) from MinTempTable where YEARMODA like ‘2012%’)")
+ MinTempvalue.show()
+
+
+Maximum Temparature for 2013
+ MaxTempvalue = spark.sql("select * from MaxTempTable where MAX=(select MAX(MAX) from MaxTempTable where YEARMODA like ‘2013%’)")
+ MaxTempvalue.show()
+
+Minimum Temparature for 2013
+
+ MinTempvalue = spark.sql("select * from MinTempTable where MIN=(select MIN(MIN) from MinTempTable where YEARMODA like ‘2013%’)")
+ MinTempvalue.show()
+
+
+Maximum Temparature for 2014:
+ MaxTempvalue = spark.sql("select * from MaxTempTable where MAX=(select MAX(MAX) from MaxTempTable where YEARMODA like ‘2014%’)")
+ MaxTempvalue.show()
+
+Minimum Temparature for 2014
+
+ MinTempvalue = spark.sql("select * from MinTempTable where MIN=(select MIN(MIN) from MinTempTable where YEARMODA like ‘2014%’)")
+ MinTempvalue.show()
+
+
+Maximum Temparature for 2015:
+ MaxTempvalue = spark.sql("select * from MaxTempTable where MAX=(select MAX(MAX) from MaxTempTable where YEARMODA like ‘2015%’)")
+ MaxTempvalue.show()
+
+Minimum Temparature for 2015
+
+ MinTempvalue = spark.sql("select * from MinTempTable where MIN=(select MIN(MIN) from MinTempTable where YEARMODA like '2015%')")
+ MinTempvalue.show()
+
+
+Maximum Temparature for 2016:
+ MaxTempvalue = spark.sql("select * from MaxTempTable where MAX=(select MAX(MAX) from MaxTempTable where YEARMODA like ‘2016%’)")
+ MaxTempvalue.show()
+
+Minimum Temparature for 2016
+
+ MinTempvalue = spark.sql("select * from MinTempTable where MIN=(select MIN(MIN) from MinTempTable where YEARMODA like ‘2016%’)")
+ MinTempvalue.show()
+
+
+Maximum Temparature for 2017:
+ MaxTempvalue = spark.sql("select * from MaxTempTable where MAX=(select MAX(MAX) from MaxTempTable where YEARMODA like ‘2017%’)")
+ MaxTempvalue.show()
+
+Minimum Temparature for 2017
+
+ MinTempvalue = spark.sql("select * from MinTempTable where MIN=(select MIN(MIN) from MinTempTable where YEARMODA like ‘2017%’)")
+ MinTempvalue.show()
+
+
+Maximum Temparature for 2018:
+ MaxTempvalue = spark.sql("select * from MaxTempTable where MAX=(select MAX(MAX) from MaxTempTable where YEARMODA like ‘2018%’)")
+ MaxTempvalue.show()
+
+Minimum Temparature for 2018
+
+ MinTempvalue = spark.sql("select * from MinTempTable where MIN=(select MIN(MIN) from MinTempTable where YEARMODA like ‘2018%’)")
+ MinTempvalue.show()
+
+Maximum Temparature for 2019:
+MaxTempvalue = spark.sql("select * from MaxTempTable where MAX=(select MAX(MAX) from MaxTempTable where YEARMODA like ‘2019%’)")
+MaxTempvalue.show()
+
+Minimum Temparature for 2019
+
+MinTempvalue = spark.sql("select * from MinTempTable where MIN=(select MIN(MIN) from MinTempTable where YEARMODA like '2019%')")
+MinTempvalue.show()
+
+OUTPUT::
+
+Maximum Temperature for 2010
+
+|  MAX|    STN|YEARMODA|
+|132.8|'720667|20100923|
+|132.8|'722577|20120712|
+|132.8|'406890|20130712|
+
+Minimum Temperature for 2010
+
+|   MIN|    STN|YEARMODA|
+|-115.2|'896060|20100802|
+
+
+Maximum Temperature for 2011
+
+|  MAX|    STN|YEARMODA|
+|131.0|'720293|20110613|
+
+Minimum Temperature for 2011
+
+|   MIN|    STN|YEARMODA|
+|-111.8|'897340|20110917|
+
+
+Maximum Temperature for 2012
+
+|  MAX|    STN|YEARMODA|
+|132.8|'722577|20120712|
+
+
+Minimum Temperature for 2012
+
+|   MIN|    STN|YEARMODA| 
+|-119.6|'896060|20120916|
+
+
+Maximum Temperature for 2013
+
+|  MAX|    STN|YEARMODA|
+|132.8|'406890|20130712|
+
+
+Minimum Temperature for 2013
+
+|   MIN|    STN|YEARMODA| 
+|-115.1|'895770|20130730|
+|-115.1|'895770|20130731|
+
+
+Maximum Temperature for 2014
+
+|  MAX|    STN|YEARMODA|
+|129.6|'406650|20140803|
+
+Minimum Temperature for 2014
+
+|   MIN|    STN|YEARMODA|
+|-113.4|'896060|20140821|
+
+
+Maximum Temperature for 2015
+
+|  MAX|    STN|YEARMODA| 
+|132.4|'916700|20151021|
+
+
+Minimum Temperature for 2015
+
+|   MIN|    STN|YEARMODA|
+|-114.2|'895770|20150917|
+|-114.2|'896060|20150822|
+
+
+
+Maximum Temperature for 2016
+
+|  MAX|    STN|YEARMODA|
+|129.0|'700638|20160622|
+
+Minimum Temperature for 2016
+
+|   MIN|    STN|YEARMODA|
+|-115.1|'896060|20160712|
+
+
+
+Maximum Temperature for 2017
+
+|  MAX|    STN|YEARMODA| 
+|129.6|'917430|20170410|
+
+
+
+Minimum Temperature for 2017
+
+|   MIN|    STN|YEARMODA|
+|-116.0|'896250|20170620|
+
+
+
+Maximum Temperature for 2018
+
+|  MAX|    STN|YEARMODA| 
+|126.3|'408110|20180702|
+
+
+
+Minimum Temperature for 2018
+
+|   MIN|    STN|YEARMODA|
+|-116.3|'896060|20180828|
+
+
+
+Maximum Temperature for 2019
+
+|  MAX|    STN|YEARMODA|
+|121.1|'956660|20190124|
+
+
+Minimum Temperature for 2019
+
+|   MIN|    STN|YEARMODA|
+|-102.1|'896060|20190405|
+
+
+
+====================================================================================================================================================================================
+Question 2: 
+
+Calculating Maximum Temparature from 2010-2019(all years): 
+-----------------------------------------------------------
+
+Maxtemp_Clean = cleanData.filter(cleanData.MAX != 9999.9)
+Maxtemp_Clean_converted = Maxtemp_Clean.select(Maxtemp_Clean.MAX.cast('float').alias('MAX'), Maxtemp_Clean.STN, Maxtemp_Clean.YEARMODA)
+Maxtemp_Clean_converted.createOrReplaceTempView("MaxTempTable")
+MaxTempvalue = spark.sql("select * from MaxTempTable where MAX=(select MAX(MAX) from MaxTempTable)")
+MaxTempvalue.show()
+
+For Minimum Temparature for in all years: 
+
+Mintemp_Clean = cleanData.filter(cleanData.MIN != 9999.9)
+Mintemp_Clean_converted = Mintemp_Clean.select(Mintemp_Clean.MIN.cast('float').alias('MIN'), Mintemp_Clean.STN, Mintemp_Clean.YEARMODA)
+Mintemp_Clean_converted.createOrReplaceTempView("MinTempTable")
+MinTempvalue = spark.sql("select * from MinTempTable where MIN=(select MIN(MIN) from MinTempTable)")
+MinTempvalue.show()
+
+
+OUTPUT
+
+Maximum Temperature for 2010-2019:
+                                                        
+|  MAX|    STN|YEARMODA|
+|132.8|'720667|20100923|
+|132.8|'722577|20120712|
+|132.8|'406890|20130712|
+
+
+Minimum Temperature for 2010-2019: 
+
+|   MIN|    STN|YEARMODA|
+|-119.6|'896060|20120916|
+
+
+
+====================================================================================================================================================================================
+
+Question 3: 
+
+file_path = "/data/weather/2015"                                           
+ inTextData = spark.read.format("csv").option("header", "true").option("delimiter","\t").load(file_path)
+ rdd1 = inTextData.rdd                                                       
+ rdd2 = rdd1.map(lambda x: str(x).split('=')[1])
+ rdd3 = rdd2.map(lambda x: ' '.join(x.split()))
+ rdd4 = rdd3.map(lambda x: x[1:-2])
+ rdd5 = rdd4.map(lambda x: str(x).replace('*',''))
+ rdd6 = rdd5.map(lambda x: str(x).replace('G',''))
+ rdd7 = rdd6.map(lambda x: str(x).replace('I',''))
+ rdd8 = rdd7.map(lambda x: str(x).replace('A',''))
+ rdd9 = rdd8.map(lambda x: str(x).replace('B',''))
+ rdd10 = rdd9.map(lambda x: str(x).replace('C',''))
+ rdd11 = rdd10.map(lambda x: str(x).replace('D',''))
+ rdd12 = rdd11.map(lambda x: str(x).replace('E',''))
+ rdd13 = rdd12.map(lambda x: str(x).replace('F',''))
+ rdd14= rdd13.map(lambda x: str(x).replace('G',''))
+ rdd15 = rdd14.map(lambda x: str(x).replace('H',''))
+
+ rdd15.saveAsTextFile("/tmp/sreenath/spark2015")
+ newInData = spark.read.csv("/tmp/sreenath/spark2015",header=False,sep=' ')           
+ cleanData = newInData.drop('_c1','_c4','_c6','_c8','_c10','_c12','_c14')    
+cleanData = cleanData.withColumnRenamed('_c0','STN').withColumnRenamed('_c2','YEARMODA')\
+                     .withColumnRenamed('_c3','TEMP').withColumnRenamed('_c5','DEWP')\
+                     .withColumnRenamed('_c7','SLP').withColumnRenamed('_c9','STP')\
+                     .withColumnRenamed('_c11','VISIB').withColumnRenamed('_c13','WDSP')\
+                     .withColumnRenamed('_c15','MXSPD').withColumnRenamed('_c16','GUST')\
+                     .withColumnRenamed('_c17','MAX').withColumnRenamed('_c18','MIN')\
+                     .withColumnRenamed('_c19','PRCP').withColumnRenamed('_c20','SNDP')\
+                     .withColumnRenamed('_c21','FRSHTT')
+ data_prcp = cleanData.filter(cleanData.PRCP!= 99.99)
+ Prcp = data_prcp.select(data_prcp.PRCP.cast('float').alias('PRCP'), data_prcp.STN, data_prcp.YEARMODA)
+ Prcp.createOrReplaceTempView("PrecipTable")
+
+Maximum Precipitation for year 2015:
+------------------------------------ 
+
+ prcpmax_value = spark.sql("select * from PrecipTable where PRCP=(select MAX(PRCP) from PrecipTable)")
+ prcpmax_value.show()
+
+Minimum Precipitation for year 2015:
+------------------------------------ 
+
+ prcpmin_value = spark.sql("select * from PrecipTable where PRCP=(select MIN(PRCP) from PrecipTable)")
+ prcpmin_value.show()
+
+
+OUTPUT::
+
+                                                        
+| PRCP|    STN|YEARMODA|
+|19.49|'915410|20150311|
+
+
+|PRCP|    STN|YEARMODA|
+| 0.0|'914130|20150104|
+
+
+===================================================================================================================================================================================
+Question 4: 
+calculating the missing values percentage for 2019:
+
+datfr2019=spark.read.csv('/tmp/pabbatph/spark2019',header=False,sep=' ')
+cleanData = datfr2019.drop('_c1','_c4','_c6','_c8','_c10','_c12','_c14')
+cleanData = cleanData.withColumnRenamed('_c0','STN').withColumnRenamed('_c2','YEARMODA')\
+                    .withColumnRenamed('_c3','TEMP').withColumnRenamed('_c5','DEWP')\
+                    .withColumnRenamed('_c7','SLP').withColumnRenamed('_c9','STP')\
+                    .withColumnRenamed('_c11','VISIB').withColumnRenamed('_c13','WDSP')\
+                    .withColumnRenamed('_c15','MXSPD').withColumnRenamed('_c16','GUST')\
+                    .withColumnRenamed('_c17','MAX').withColumnRenamed('_c18','MIN')\
+                    .withColumnRenamed('_c19','PRCP').withColumnRenamed('_c20','SNDP')\
+                    .withColumnRenamed('_c21','FRSHTT')
+cleanData.createOrReplaceTempView("STP_Table")
+countJunk = spark.sql("select count(1) from STP_Table where STP = 9999.9")
+Count = spark.sql("select count(1) from STP_Table")
+total_cols=Count.collect()[0][0]
+junk=countJunk.collect()[0][0]
+percentage=100 * float(junk)/float(total_cols)
+print(percentage)
+
+OUTPUT::
+
+percentage = 27.961149261
+
+====================================================================================================================================================================================
+Question 5: 
+------------
+
+calculating the Min and Max Gust: 
+
+datfr2019=spark.read.csv('/tmp/pabbatph/spark2019',header=False,sep=' ')
+cleanData = datfr2019.drop('_c1','_c4','_c6','_c8','_c10','_c12','_c14')
+cleanData = cleanData.withColumnRenamed('_c0','STN').withColumnRenamed('_c2','YEARMODA')\
+                    .withColumnRenamed('_c3','TEMP').withColumnRenamed('_c5','DEWP')\
+                    .withColumnRenamed('_c7','SLP').withColumnRenamed('_c9','STP')\
+                    .withColumnRenamed('_c11','VISIB').withColumnRenamed('_c13','WDSP')\
+                    .withColumnRenamed('_c15','MXSPD').withColumnRenamed('_c16','GUST')\
+                    .withColumnRenamed('_c17','MAX').withColumnRenamed('_c18','MIN')\
+                    .withColumnRenamed('_c19','PRCP').withColumnRenamed('_c20','SNDP')\
+                    .withColumnRenamed('_c21','FRSHTT')
+
+gust_data = cleanData.filter(cleanData.GUST!= 999.9)
+Gust_floatvalue = gust_data.select(gust_data.GUST.cast('float').alias('GUST'), gust_data.STN, gust_data.YEARMODA)
+Gust_floatvalue.createOrReplaceTempView("gusttable")
+Maxvalue = spark.sql("select * from gusttable where GUST=(select MAX(GUST) from gusttable )")
+Maxvalue.show()
+
+                                                       
+| GUST|    STN|YEARMODA|
+|116.6|'085510|20190101|
+|116.6|'085510|20190106|
+
+
